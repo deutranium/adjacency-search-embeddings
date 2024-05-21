@@ -32,7 +32,8 @@ class TAS:
         self.window_size = window_size
         self.workers = workers
         self.iter = iter
-
+        
+        self.to_store_sentences = {i:[] for i in g.nodes()}
         self.SEED = seed
 
         self.walks = self.get_sentences()
@@ -66,8 +67,10 @@ class TAS:
                                 this_sentence, t
                             )
                             sentences.append(this_threshold_sentence)
+                            self.to_store_sentences[node].append(this_threshold_sentence)
                 else:
                     sentences.append([node])
+                    self.to_store_sentences[node].append([node])
 
         return sentences
 
@@ -124,7 +127,19 @@ class TAS:
         d = self.model.wv.key_to_index
         embeds = self.model.wv
 
-        with open(f"{path}_d_TAS.json", "w", encoding="utf-8") as f:
+        with open(f"{path}_embeddings_mapping_TAS.json", "w", encoding="utf-8") as f:
             json.dump(d, f, indent=4)
-        with open(f"{path}_embeds_TAS.pickle", "wb") as handle:
+        with open(f"{path}_embeddings_TAS.pickle", "wb") as handle:
             pickle.dump(embeds, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+    def store_sequences(self, path):
+        """
+            To store data about adjacency list to create TAS-graph
+        """
+        s = self.to_store_sentences
+
+        with open(f"{path}_sequences.json", "w", encoding="utf-8") as f:
+            json.dump(s, f, indent=4)
+        print(f">> INFO: Stored sequences at {path}_sequences.json")
+
+        return 0

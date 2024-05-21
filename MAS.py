@@ -32,6 +32,8 @@ class MAS:
         self.workers = workers
         self.iter = iter
 
+        self.to_store_sentences = {i: [] for i in g.nodes()}
+
         self.SEED = seed
 
         self.walks = self.get_sentences()
@@ -60,8 +62,10 @@ class MAS:
                         this_sentence = self.get_MAS(this_sentence)
 
                         sentences.append(this_sentence)
+                        self.to_store_sentences[node].append(this_sentence)
                 else:
                     sentences.append([node])
+                    self.to_store_sentences[node].append([node])
 
         return sentences
     
@@ -91,6 +95,7 @@ class MAS:
 
         while idx < thresh_len:
             this_max = max(count_dict, key=count_dict.get)
+            del count_dict[this_max]
             res.append(this_max)
             cur_nodes.add(this_max)
             idx += 1
@@ -124,3 +129,25 @@ class MAS:
     def get_embedding(self, u):
         idx = self.model.wv.key_to_index[u]
         return self.model.wv[idx]
+
+    def store_embeddings(self, path):
+        d = self.model.wv.key_to_index
+        embeds = self.model.wv
+
+        with open(f"{path}_embeddings_mapping_MAS.json", "w", encoding="utf-8") as f:
+            json.dump(d, f, indent=4)
+        with open(f"{path}_embeddings_MAS.pickle", "wb") as handle:
+            pickle.dump(embeds, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+    def store_sequences(self, path):
+        """
+            To store data about adjacency list to create MAS-graph
+        """
+        s = self.to_store_sentences
+
+        with open(f"{path}_sequences.json", "w", encoding="utf-8") as f:
+            json.dump(s, f, indent=4)
+        print(f">> INFO: Stored sequences at {path}_sequences.json")
+
+        return 0
+
